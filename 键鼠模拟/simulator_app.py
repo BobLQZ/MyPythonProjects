@@ -10,7 +10,7 @@ class SimulatorApp:
     def __init__(self, master):
         self.master = master
         self.master.title("SimulatorApp")
-        self.master.geometry("260x440+830+320")  # 设置窗口大小和位置
+        self.master.geometry("520x440+700+320")  # 设置窗口大小和位置
         self.is_running = False
 
         self.master.resizable(False, False)  # 禁止水平方向和垂直方向的调整大小
@@ -20,7 +20,7 @@ class SimulatorApp:
 
         # 获取组件的行数和列数
         rows = 10  # 根据界面控件来设置行数
-        columns = 2  # 界面有两列
+        columns = 4  # 界面有两列
 
         # 自动设置所有列和行的大小
         for col in range(columns):
@@ -63,7 +63,22 @@ class SimulatorApp:
                                                                                            pady=1, sticky='nsew')
 
         tk.Label(master, text="连点间隔(ms):").grid(row=6, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
-        tk.Entry(master, textvariable=self.click_interval, width=13).grid(row=7, column=0, columnspan=2, padx=1, pady=1)
+        self.click_interval_entry = tk.Entry(master, textvariable=self.click_interval, width=13)
+        self.click_interval_entry.grid(row=7, column=0, columnspan=2, padx=1, pady=1)
+
+        # # Canvas用来绘制气泡提示
+        # self.canvas = tk.Canvas(master, width=200, height=40, bg="white", bd=0, highlightthickness=0)
+        # self.canvas.grid(row=8, column=0, columnspan=2, padx=1, pady=1, sticky="nsew")
+        # self.canvas.create_text(100, 20, text="", anchor="center", font=("Arial", 10), fill="red")
+
+        # # 创建一个 canvas 用于显示提示信息
+        # self.tooltip = tk.Label(master, text="", bg="yellow", fg="black", font=("Arial", 10), bd=1, relief="solid")
+        # self.tooltip.grid(row=8, column=0, columnspan=2, padx=1, pady=1)
+        # self.tooltip.grid_forget()  # 初始隐藏提示框
+        #
+        # # 绑定鼠标事件显示气泡提示
+        # self.click_interval_entry.bind("<Enter>", self.show_tooltip)
+        # self.click_interval_entry.bind("<Leave>", self.hide_tooltip)
 
         tk.Label(master, text="控制按键:").grid(row=8, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
         # 创建一个包含 F1 到 F12 的下拉菜单
@@ -74,6 +89,14 @@ class SimulatorApp:
 
         self.start_button = tk.Button(master, text="开始模拟", command=self.toggle_simulation, width=10)
         self.start_button.grid(row=10, column=0, columnspan=2, padx=1, pady=1)
+
+        # 添加状态显示文本框
+        self.status_label = tk.Label(master, text="模拟记录:")
+        self.status_label.grid(row=0, column=2, columnspan=2, padx=1, pady=1, sticky='w')
+
+        self.status_text = tk.Text(master, height=6, width=30, wrap=tk.WORD, state=tk.DISABLED)
+        self.status_text.grid(row=1, column=2, columnspan=2, rowspan=9, padx=1, pady=1, sticky='nsew')
+        self.update_status("软件已就绪")  # 初始状态
 
         # 启动控制按键的检测
         self.check_control_key()
@@ -103,12 +126,41 @@ class SimulatorApp:
             self.Radiobutton_l.grid_forget()
             self.Radiobutton_r.grid_forget()
 
+    def update_status(self, message):
+        # 向文本框中添加信息并自动滚动
+        self.status_text.config(state=tk.NORMAL)  # 允许编辑
+        self.status_text.insert(tk.END, message + "\n")
+        self.status_text.config(state=tk.DISABLED)  # 禁止编辑
+        self.status_text.yview(tk.END)  # 自动滚动到底部
+
     def zh_cn_To_en_us(self, key):
-        key_zh_cn = {'左方向键':'left', '右方向键':'right', '上方向键':'up', '下方向键':'down', '空格':'space'}
+        key_zh_cn = {'左方向键': 'left', '右方向键': 'right', '上方向键': 'up', '下方向键': 'down', '空格': 'space',
+                     '长按': 'hold', '连点': 'spam'}
         try:
             return key_zh_cn[key]
         except:
-            return key
+            try:
+                return [k for k, v in key_zh_cn.items() if v == key][0]
+            except:
+                return key
+
+    # def show_tooltip(self, event):
+    #     self.canvas.itemconfig(1, text="间隔：最小为100ms")  # 显示气泡提示
+    #     self.canvas.lift(1)  # 将提示文字提升到最前面
+    #
+    # def hide_tooltip(self, event):
+    #     # 隐藏提示
+    #     self.canvas.itemconfig(1, text="")
+    #     self.canvas.lower(1)  # 将提示文字移到最底层
+
+    # def show_tooltip(self, event):
+    #     """显示气泡提示"""
+    #     self.tooltip.config(text="间隔：最小为100ms")  # 显示气泡提示
+    #     self.tooltip.grid(row=8, column=0, columnspan=2, padx=1, pady=1)  # 重新显示提示框
+    #
+    # def hide_tooltip(self, event):
+    #     """隐藏气泡提示"""
+    #     self.tooltip.grid_forget()  # 隐藏提示框
 
     def check_control_key(self):
         control_key = self.control_key.get()
@@ -123,6 +175,8 @@ class SimulatorApp:
         if not self.is_running:
             self.is_running = True
             self.start_button.config(text="停止模拟")
+            self.update_status(
+                f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us(self.function_var.get())} - {self.zh_cn_To_en_us(self.selected_key.get())}")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
             self.is_running = False
@@ -131,6 +185,9 @@ class SimulatorApp:
     def run_simulation(self):
         control_key = self.control_key.get()
         interval = self.click_interval.get() / 1000.0  # 转换为秒
+        click_count = 0
+        start_time = time.time()
+
         while self.is_running:
 
             # 定期处理事件
@@ -155,9 +212,10 @@ class SimulatorApp:
                 elif self.function_var.get() == 'spam':
                     button = self.mouse_button.get()
                     while self.is_running:
-                        start_time = time.perf_counter()
+                        start_time_spam = time.perf_counter()
                         pyautogui.click(button=button)
-                        elapsed_time = time.perf_counter() - start_time
+                        click_count += 1
+                        elapsed_time = time.perf_counter() - start_time_spam
                         time.sleep(max(0, interval - elapsed_time))  # 使用自定义间隔
             elif self.action_var.get() == 'key':
                 key = self.zh_cn_To_en_us(self.selected_key.get())
@@ -169,10 +227,17 @@ class SimulatorApp:
                     pyautogui.keyUp(key)
                 elif self.function_var.get() == 'spam':
                     while self.is_running:
-                        start_time = time.perf_counter()
+                        start_time_spam = time.perf_counter()
                         pyautogui.press(key)
-                        elapsed_time = time.perf_counter() - start_time
+                        click_count += 1
+                        elapsed_time = time.perf_counter() - start_time_spam
                         time.sleep(max(0, interval - elapsed_time))  # 使用自定义间隔
+
+        # 模拟结束时显示时间和点击次数
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        self.update_status(
+            f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}")
         self.start_button.config(text="开始模拟")
 
 
