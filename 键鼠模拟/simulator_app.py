@@ -4,27 +4,31 @@ import pyautogui
 import keyboard
 import time
 import threading
+from random import randint
 
 
 class SimulatorApp:
     def __init__(self, master):
         self.master = master
         self.master.title("SimulatorApp")
+        # self.master.iconbitmap('logo.ico')
         self.master.geometry("620x440+650+320")  # 设置窗口大小和位置
         self.is_running = False
-
-        self.master.resizable(False, False)  # 禁止水平方向和垂直方向的调整大小
+        # self.master.resizable(False, False)  # 禁止水平方向和垂直方向的调整大小
 
         # 设置窗口的内边距
-        self.master.configure(padx=20, pady=10)  # 设置窗口边缘与控件之间的距离
+        self.master.configure(padx=10, pady=10)  # 设置窗口边缘与控件之间的距离
 
         # 获取组件的行数和列数
         rows = 10  # 根据界面控件来设置行数
         columns = 5  # 界面有5列
 
         # 自动设置所有列和行的大小
-        for col in range(columns):
-            master.grid_columnconfigure(col, weight=1, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
+        for col in range(2):
+            master.grid_columnconfigure(col, weight=3, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
+
+        for col in range(2, columns):
+            master.grid_columnconfigure(col, weight=5, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
 
         for row in range(rows):
             master.grid_rowconfigure(row, weight=1, minsize=27)  # 所有行高度随窗口变化，最小高度 27px
@@ -34,6 +38,7 @@ class SimulatorApp:
         self.selected_key = tk.StringVar(value='a')
         self.function_var = tk.StringVar(value='spam')
         self.click_interval = tk.DoubleVar(value=100)
+        self.click_interval_swings = tk.DoubleVar(value=50)
         self.control_key = tk.StringVar(value='F12')  # 默认值为 F12
 
         tk.Label(master, text="选择操作:").grid(row=0, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
@@ -54,7 +59,7 @@ class SimulatorApp:
         self.key_options.extend(['空格', 'enter', 'tab', 'esc'])  # 常用功能键
 
         self.key_combobox = ttk.Combobox(master, textvariable=self.selected_key, values=self.key_options,
-                                         state="normal", width=10)
+                                         state="normal", width=8)
 
         tk.Label(master, text="选择功能:").grid(row=4, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
         tk.Radiobutton(master, text="连点", variable=self.function_var, value='spam').grid(row=5, column=0, padx=1,
@@ -62,9 +67,13 @@ class SimulatorApp:
         tk.Radiobutton(master, text="长按", variable=self.function_var, value='hold').grid(row=5, column=1, padx=1,
                                                                                            pady=1, sticky='nsew')
 
-        tk.Label(master, text="连点间隔(ms):").grid(row=6, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
-        self.click_interval_entry = tk.Entry(master, textvariable=self.click_interval, width=13)
-        self.click_interval_entry.grid(row=7, column=0, columnspan=2, padx=1, pady=1)
+        tk.Label(master, text="连点间隔(ms):").grid(row=6, column=0, padx=1, pady=1, sticky='nsew')
+        self.click_interval_entry = tk.Entry(master, textvariable=self.click_interval, width=11)
+        self.click_interval_entry.grid(row=7, column=0, padx=1, pady=1)
+
+        tk.Label(master, text="间隔波动(ms):").grid(row=6, column=1, padx=1, pady=1, sticky='nsew')
+        self.click_interval_swings = tk.Entry(master, textvariable=self.click_interval_swings, width=11)
+        self.click_interval_swings.grid(row=7, column=1, padx=1, pady=1)
 
         # # Canvas用来绘制气泡提示
         # self.canvas = tk.Canvas(master, width=200, height=40, bg="white", bd=0, highlightthickness=0)
@@ -84,7 +93,7 @@ class SimulatorApp:
         # 创建一个包含 F1 到 F12 的下拉菜单
         self.control_key_options = [f'F{i}' for i in range(1, 13)]  # 生成 F1 到 F12 的选项
         self.control_key_combobox = ttk.Combobox(master, textvariable=self.control_key, values=self.control_key_options,
-                                                 state="readonly", width=10)
+                                                 state="readonly", width=8)
         self.control_key_combobox.grid(row=9, column=0, columnspan=2, padx=1, pady=1)
 
         self.start_button = tk.Button(master, text="开始模拟", command=self.toggle_simulation, width=10)
@@ -92,11 +101,11 @@ class SimulatorApp:
 
         # 添加状态显示文本框
         self.status_label = tk.Label(master, text="模拟记录:")
-        self.status_label.grid(row=0, column=2, columnspan=3, padx=1, pady=1, sticky='w')
+        self.status_label.grid(row=0, column=2, columnspan=3, padx=9, pady=1, sticky='w')
 
         self.status_text = tk.Text(master, height=6, width=30, wrap=tk.WORD, state=tk.DISABLED)
-        self.status_text.grid(row=1, column=2, columnspan=3, rowspan=9, padx=1, pady=1, sticky='nsew')
-        self.update_status("软件已就绪")  # 初始状态
+        self.status_text.grid(row=1, column=2, columnspan=3, rowspan=9, padx=9, pady=1, sticky='nsew')
+        self.update_status(f"<{time.strftime('%H:%M:%S')}>软件已就绪", color="")  # 初始状态
 
         # 启动控制按键的检测
         self.check_control_key()
@@ -126,10 +135,14 @@ class SimulatorApp:
             self.Radiobutton_l.grid_forget()
             self.Radiobutton_r.grid_forget()
 
-    def update_status(self, message):
+    def update_status(self, message, color="black"):
         # 向文本框中添加信息并自动滚动
         self.status_text.config(state=tk.NORMAL)  # 允许编辑
         self.status_text.insert(tk.END, message + "\n")
+        line_index = str(int(self.status_text.index(tk.END).split('.')[0]) - 2)  # 获取当前插入文本的行号, 起始行号为 3 暂时不知道为什么
+        tag_name = f"text_{line_index}"  # 为新插入的文本创建一个唯一标签
+        self.status_text.tag_add(tag_name, f"{line_index}.0", f"{line_index}.end")  # 为新插入的文本设置标签
+        self.status_text.tag_config(tag_name, foreground=color)  # 新文本按需着色
         self.status_text.config(state=tk.DISABLED)  # 禁止编辑
         self.status_text.yview(tk.END)  # 自动滚动到底部
 
@@ -177,8 +190,8 @@ class SimulatorApp:
             self.toggle_simulation()
             # 等待按键释放，高效地避免按键卡住导致多次触发
             while keyboard.is_pressed(control_key):
-                time.sleep(0.1)
-        self.master.after(10, self.check_control_key)
+                time.sleep(0.01)
+        self.master.after(100, self.check_control_key)
 
     def toggle_simulation(self):
         if not self.is_running:
@@ -186,10 +199,10 @@ class SimulatorApp:
             self.start_button.config(text="停止模拟")
             if self.action_var.get() == 'mouse':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}")
+                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}", color="#41ae3c")
             elif self.action_var.get() == 'key':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.zh_cn_To_en_us_key(self.selected_key.get())}")
+                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.zh_cn_To_en_us_key(self.selected_key.get())}", color="#41ae3c")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
             self.is_running = False
@@ -197,7 +210,9 @@ class SimulatorApp:
 
     def run_simulation(self):
         control_key = self.control_key.get()
-        interval = self.click_interval.get() / 1000.0  # 转换为秒
+        interval = float(self.click_interval.get()).__abs__()
+        interval_swings = int(self.click_interval_swings.get()).__abs__()
+
         click_count = 0
         start_time = time.time()
 
@@ -206,6 +221,7 @@ class SimulatorApp:
             # 定期处理事件
             self.master.update_idletasks()
             self.master.update()
+            interval_round = (interval + randint(-interval_swings, interval_swings)) / 1000.0
 
             # 如果控制按键被按下，停止模拟
             if keyboard.is_pressed(control_key):
@@ -229,7 +245,7 @@ class SimulatorApp:
                         pyautogui.click(button=button)
                         click_count += 1
                         elapsed_time = time.perf_counter() - start_time_spam
-                        time.sleep(max(0, interval - elapsed_time))  # 使用自定义间隔
+                        time.sleep(max(0, interval_round - elapsed_time))  # 使用自定义间隔
             elif self.action_var.get() == 'key':
                 key = self.zh_cn_To_en_us_key(self.selected_key.get())
                 if self.function_var.get() == 'hold':
@@ -243,17 +259,17 @@ class SimulatorApp:
                         pyautogui.press(key)
                         click_count += 1
                         elapsed_time = time.perf_counter() - start_time_spam
-                        time.sleep(max(0, interval - elapsed_time))  # 使用自定义间隔
+                        time.sleep(max(0, interval_round - elapsed_time))  # 使用自定义间隔
 
         # 模拟结束时显示时间和点击次数
         end_time = time.time()
         elapsed_time = end_time - start_time
         if self.function_var.get() == 'hold':
             self.update_status(
-                f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒")
+                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒", color="")
         elif self.function_var.get() == 'spam':
             self.update_status(
-                f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}")
+                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}, 平均间隔: {elapsed_time/click_count:.3f}", color="")
         self.start_button.config(text="开始模拟")
 
 
