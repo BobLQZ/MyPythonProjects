@@ -10,7 +10,7 @@ class SimulatorApp:
     def __init__(self, master):
         self.master = master
         self.master.title("SimulatorApp")
-        self.master.geometry("520x440+700+320")  # 设置窗口大小和位置
+        self.master.geometry("620x440+650+320")  # 设置窗口大小和位置
         self.is_running = False
 
         self.master.resizable(False, False)  # 禁止水平方向和垂直方向的调整大小
@@ -20,7 +20,7 @@ class SimulatorApp:
 
         # 获取组件的行数和列数
         rows = 10  # 根据界面控件来设置行数
-        columns = 4  # 界面有两列
+        columns = 5  # 界面有5列
 
         # 自动设置所有列和行的大小
         for col in range(columns):
@@ -29,13 +29,14 @@ class SimulatorApp:
         for row in range(rows):
             master.grid_rowconfigure(row, weight=1, minsize=27)  # 所有行高度随窗口变化，最小高度 27px
 
-        self.control_key = tk.StringVar(value='F12')  # 默认值为 F12
-        self.selected_key = tk.StringVar(value='a')
-        self.click_interval = tk.DoubleVar(value=10)
+        self.action_var = tk.StringVar(value='mouse')
         self.mouse_button = tk.StringVar(value='left')
+        self.selected_key = tk.StringVar(value='a')
+        self.function_var = tk.StringVar(value='spam')
+        self.click_interval = tk.DoubleVar(value=100)
+        self.control_key = tk.StringVar(value='F12')  # 默认值为 F12
 
         tk.Label(master, text="选择操作:").grid(row=0, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
-        self.action_var = tk.StringVar(value='mouse')
         tk.Radiobutton(master, text="鼠标点击", variable=self.action_var, value='mouse', command=self.update_ui).grid(
             row=1, column=0, padx=1, pady=1, sticky='nsew')
         tk.Radiobutton(master, text="键盘按键", variable=self.action_var, value='key', command=self.update_ui).grid(
@@ -56,7 +57,6 @@ class SimulatorApp:
                                          state="normal", width=10)
 
         tk.Label(master, text="选择功能:").grid(row=4, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
-        self.function_var = tk.StringVar(value='spam')
         tk.Radiobutton(master, text="连点", variable=self.function_var, value='spam').grid(row=5, column=0, padx=1,
                                                                                            pady=1, sticky='nsew')
         tk.Radiobutton(master, text="长按", variable=self.function_var, value='hold').grid(row=5, column=1, padx=1,
@@ -92,10 +92,10 @@ class SimulatorApp:
 
         # 添加状态显示文本框
         self.status_label = tk.Label(master, text="模拟记录:")
-        self.status_label.grid(row=0, column=2, columnspan=2, padx=1, pady=1, sticky='w')
+        self.status_label.grid(row=0, column=2, columnspan=3, padx=1, pady=1, sticky='w')
 
         self.status_text = tk.Text(master, height=6, width=30, wrap=tk.WORD, state=tk.DISABLED)
-        self.status_text.grid(row=1, column=2, columnspan=2, rowspan=9, padx=1, pady=1, sticky='nsew')
+        self.status_text.grid(row=1, column=2, columnspan=3, rowspan=9, padx=1, pady=1, sticky='nsew')
         self.update_status("软件已就绪")  # 初始状态
 
         # 启动控制按键的检测
@@ -133,16 +133,25 @@ class SimulatorApp:
         self.status_text.config(state=tk.DISABLED)  # 禁止编辑
         self.status_text.yview(tk.END)  # 自动滚动到底部
 
-    def zh_cn_To_en_us(self, key):
+    def zh_cn_To_en_us_key(self, key):
         key_zh_cn = {'左方向键': 'left', '右方向键': 'right', '上方向键': 'up', '下方向键': 'down', '空格': 'space',
                      '长按': 'hold', '连点': 'spam'}
         try:
             return key_zh_cn[key]
         except:
+            value = [k for k, v in key_zh_cn.items() if v == key]
             try:
-                return [k for k, v in key_zh_cn.items() if v == key][0]
+                return value[0]
             except:
                 return key
+
+    def zh_cn_To_en_us_mou(self, mou):
+        mou_zh_cn = {'左键 ': 'left', '右键': 'right', '长按': 'hold', '连点': 'spam'}
+        value = [k for k, v in mou_zh_cn.items() if v == mou]
+        try:
+            return value[0]
+        except:
+            return mou
 
     # def show_tooltip(self, event):
     #     self.canvas.itemconfig(1, text="间隔：最小为100ms")  # 显示气泡提示
@@ -168,15 +177,19 @@ class SimulatorApp:
             self.toggle_simulation()
             # 等待按键释放，高效地避免按键卡住导致多次触发
             while keyboard.is_pressed(control_key):
-                time.sleep(0.01)
+                time.sleep(0.1)
         self.master.after(10, self.check_control_key)
 
     def toggle_simulation(self):
         if not self.is_running:
             self.is_running = True
             self.start_button.config(text="停止模拟")
-            self.update_status(
-                f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us(self.function_var.get())} - {self.zh_cn_To_en_us(self.selected_key.get())}")
+            if self.action_var.get() == 'mouse':
+                self.update_status(
+                    f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}")
+            elif self.action_var.get() == 'key':
+                self.update_status(
+                    f"<{time.strftime('%H:%M:%S')}> 模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.zh_cn_To_en_us_key(self.selected_key.get())}")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
             self.is_running = False
@@ -199,7 +212,7 @@ class SimulatorApp:
                 self.toggle_simulation()
                 # 等待按键释放来避免在系统检测到重复输入
                 while keyboard.is_pressed(control_key):
-                    time.sleep(0.01)
+                    time.sleep(0.1)
                 break
 
             if self.action_var.get() == 'mouse':
@@ -218,12 +231,11 @@ class SimulatorApp:
                         elapsed_time = time.perf_counter() - start_time_spam
                         time.sleep(max(0, interval - elapsed_time))  # 使用自定义间隔
             elif self.action_var.get() == 'key':
-                key = self.zh_cn_To_en_us(self.selected_key.get())
+                key = self.zh_cn_To_en_us_key(self.selected_key.get())
                 if self.function_var.get() == 'hold':
                     pyautogui.keyDown(key)
                     while self.is_running:
                         self.master.update()  # 定期更新 GUI
-                        return
                     pyautogui.keyUp(key)
                 elif self.function_var.get() == 'spam':
                     while self.is_running:
@@ -236,8 +248,12 @@ class SimulatorApp:
         # 模拟结束时显示时间和点击次数
         end_time = time.time()
         elapsed_time = end_time - start_time
-        self.update_status(
-            f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}")
+        if self.function_var.get() == 'hold':
+            self.update_status(
+                f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒")
+        elif self.function_var.get() == 'spam':
+            self.update_status(
+                f"<{time.strftime('%H:%M:%S')}> 模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}")
         self.start_button.config(text="开始模拟")
 
 
