@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import ttk, messagebox
 import pyautogui
 import keyboard
 import time
@@ -25,21 +25,29 @@ class SimulatorApp:
 
         # 自动设置所有列和行的大小
         for col in range(2):
-            master.grid_columnconfigure(col, weight=3, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
+            master.grid_columnconfigure(col, weight=4, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
 
         for col in range(2, columns):
-            master.grid_columnconfigure(col, weight=5, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
+            master.grid_columnconfigure(col, weight=7, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
 
         for row in range(rows):
             master.grid_rowconfigure(row, weight=1, minsize=27)  # 所有行高度随窗口变化，最小高度 27px
 
-        self.action_var = tk.StringVar(value='mouse')
-        self.mouse_button = tk.StringVar(value='left')
-        self.selected_key = tk.StringVar(value='a')
-        self.function_var = tk.StringVar(value='spam')
-        self.click_interval = tk.DoubleVar(value=100)
-        self.click_interval_swings = tk.DoubleVar(value=50)
-        self.control_key = tk.StringVar(value='F12')  # 默认值为 F12
+        self.default_active = 'mouse'
+        self.default_mouse = 'left'
+        self.default_keyboard = 'a'
+        self.default_function = 'spam'
+        self.default_click = '100'
+        self.default_click_swings = '50'
+        self.default_control = 'F12'  # 默认值为 F12
+
+        self.action_var = tk.StringVar(value=self.default_active)
+        self.mouse_button = tk.StringVar(value=self.default_mouse)
+        self.selected_key = tk.StringVar(value=self.default_keyboard)
+        self.function_var = tk.StringVar(value=self.default_function)
+        self.click_interval = tk.StringVar(value=self.default_click)
+        self.click_interval_swings = tk.StringVar(value=self.default_click_swings)
+        self.control_key = tk.StringVar(value=self.default_control)
 
         tk.Label(master, text="选择操作:").grid(row=0, column=0, columnspan=2, padx=1, pady=1, sticky='nsew')
         tk.Radiobutton(master, text="鼠标点击", variable=self.action_var, value='mouse', command=self.update_ui).grid(
@@ -53,9 +61,9 @@ class SimulatorApp:
 
         self.key_combobox_Label = tk.Label(master, text="选择键盘按键:")
         # 使用Combobox来选择或输入按键
-        self.key_options = ['左方向键', '右方向键', '上方向键', '下方向键']  # 方向键选项
-        self.key_options.extend([chr(i) for i in range(97, 123)])  # 添加a-z字母按键
+        self.key_options = [chr(i) for i in range(97, 123)]  # 添加a-z字母按键
         self.key_options.extend([str(i) for i in range(0, 10)])  # 添加数字0-9按键
+        self.key_options.extend(['左方向键', '右方向键', '上方向键', '下方向键'])  # 方向键选项
         self.key_options.extend(['空格', 'enter', 'tab', 'esc'])  # 常用功能键
 
         self.key_combobox = ttk.Combobox(master, textvariable=self.selected_key, values=self.key_options,
@@ -72,8 +80,8 @@ class SimulatorApp:
         self.click_interval_entry.grid(row=7, column=0, padx=1, pady=1)
 
         tk.Label(master, text="间隔波动(ms):").grid(row=6, column=1, padx=1, pady=1, sticky='nsew')
-        self.click_interval_swings = tk.Entry(master, textvariable=self.click_interval_swings, width=11)
-        self.click_interval_swings.grid(row=7, column=1, padx=1, pady=1)
+        self.click_interval_swings_entry = tk.Entry(master, textvariable=self.click_interval_swings, width=11)
+        self.click_interval_swings_entry.grid(row=7, column=1, padx=1, pady=1)
 
         # # Canvas用来绘制气泡提示
         # self.canvas = tk.Canvas(master, width=200, height=40, bg="white", bd=0, highlightthickness=0)
@@ -112,6 +120,41 @@ class SimulatorApp:
 
         # 默认显示鼠标按钮设置，隐藏键盘按钮设置
         self.update_ui()
+
+    def check_block(self):
+        action_value = self.action_var.get().strip()  # 去除两端空白字符
+        selected_key_value = self.selected_key.get().strip()
+        click_interval_value = self.click_interval.get().strip()
+        click_interval_swings_value = self.click_interval_swings.get().strip()
+        entry = True
+        if not click_interval_value:  # 若 连点间隔 为空，则设置为默认值
+            entry = False
+            self.click_interval.set(value=self.default_click)
+            self.click_interval_entry.grid(row=7, column=0, padx=1, pady=1)
+        elif not click_interval_value.isdigit():
+            self.click_interval.set(value="")
+            self.click_interval_entry.grid(row=7, column=0, padx=1, pady=1)
+            messagebox.showwarning("输入错误!", "连点间隔只接受数字。")
+            return True
+
+        if not click_interval_swings_value:
+            entry = False
+            self.click_interval_swings.set(value=self.default_click_swings)
+            self.click_interval_swings_entry.grid(row=7, column=1, padx=1, pady=1)
+        elif not click_interval_swings_value.isdigit():
+            self.click_interval.set(value="")
+            self.click_interval_swings_entry.grid(row=7, column=1, padx=1, pady=1)
+            messagebox.showwarning("输入错误!", "波动间隔只接受数字。")
+            return True
+
+        if action_value == "key" and not selected_key_value:  # 如果为空或空白字符，弹出警告框
+            messagebox.showwarning("输入错误!", "请选择模拟按键。")
+            return True
+
+        if int(click_interval_value) <= int(click_interval_swings_value) and entry:
+            messagebox.showwarning("输入值错误!", "连点间隔小于或等于间隔波动时不起作用，所填间隔波动应小于连点间隔。")
+            return True
+        return False
 
     def update_ui(self):
         # 获取选择的操作类型
@@ -195,14 +238,18 @@ class SimulatorApp:
 
     def toggle_simulation(self):
         if not self.is_running:
+            if self.check_block():
+                return
             self.is_running = True
             self.start_button.config(text="停止模拟")
             if self.action_var.get() == 'mouse':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}", color="#41ae3c")
+                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}",
+                    color="#41ae3c")
             elif self.action_var.get() == 'key':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.zh_cn_To_en_us_key(self.selected_key.get())}", color="#41ae3c")
+                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.selected_key.get()}",
+                    color="#41ae3c")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
             self.is_running = False
@@ -269,7 +316,8 @@ class SimulatorApp:
                 f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒", color="")
         elif self.function_var.get() == 'spam':
             self.update_status(
-                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}, 平均间隔: {elapsed_time/click_count:.3f}", color="")
+                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}, 平均间隔: {elapsed_time / click_count:.3f}",
+                color="")
         self.start_button.config(text="开始模拟")
 
 
