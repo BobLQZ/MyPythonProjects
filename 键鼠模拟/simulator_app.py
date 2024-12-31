@@ -20,8 +20,12 @@ class SimulatorApp:
 
         self.default_geometry = {
             "original": "620x440",  # 原始页面大小
-            "compact": "223x440",  # 精简页面大小
+            "compact": "230x440",  # 精简页面大小
         }
+
+        # 最大行数与列数
+        self.max_rows = 0
+        self.max_cols = 0
 
         # 设置窗口的内边距
         self.master.configure(padx=10, pady=10)  # 设置窗口边缘与控件之间的距离
@@ -56,27 +60,43 @@ class SimulatorApp:
 
         # 初始化页面内容
         self.init_original_page()
-        self.init_compact_page()
 
         # 初始显示原始页面
         self.original_frame.pack(fill=tk.BOTH, expand=True)
         self.master.geometry(self.default_geometry["original"])  # 设置初始大小
 
-    def init_original_page(self):
-        """原始页面初始化"""
+    def init_rows_and_cols(self, rows, cols):
+        self.max_rows = rows
+        self.max_cols = cols
         # 获取组件的行数和列数
-        rows = 11  # 根据界面控件来设置行数
-        columns = 7  # 界面有7列
+        # 原始页面
+        # rows = 11  # 根据界面控件来设置行数
+        # cols = 7  # 界面有7列
+        # 精简页面
+        # rows = 11  # 根据界面控件来设置行数
+        # cols = 4  # 界面有7列
 
         # 自动设置所有列和行的大小
         for col in range(4):
-            self.original_frame.grid_columnconfigure(col, weight=1, minsize=40)  # 所有列宽度随窗口变化，最小宽度 20px
+            self.original_frame.grid_columnconfigure(col, weight=1, minsize=20)  # 所有列宽度随窗口变化，最小宽度 40px
 
-        for col in range(4, columns):
-            self.original_frame.grid_columnconfigure(col, weight=5, minsize=80)  # 所有列宽度随窗口变化，最小宽度 80px
+        if cols > 4:
+            for col in range(4, cols):
+                self.original_frame.grid_columnconfigure(col, weight=5, minsize=0)  # 所有列宽度随窗口变化，最小宽度 80px
 
         for row in range(rows):
             self.original_frame.grid_rowconfigure(row, weight=1, minsize=27)  # 所有行高度随窗口变化，最小高度 27px
+
+    def reset_grid_configuration(self):
+        # for row in range(self.max_rows):
+        #     self.original_frame.grid_rowconfigure(row, weight=0, minsize=0)
+        for col in range(self.max_cols):
+            self.original_frame.grid_columnconfigure(col, weight=0, minsize=0)
+
+
+    def init_original_page(self):
+        """原始页面初始化"""
+        self.init_rows_and_cols(11,7)
 
         tk.Label(self.original_frame, text="选择操作:").grid(row=0, column=1, columnspan=2, padx=1, pady=1)
         tk.Radiobutton(self.original_frame, text="鼠标点击", variable=self.action_var, value='mouse', command=self.update_ui).grid(
@@ -143,63 +163,6 @@ class SimulatorApp:
         # 默认显示鼠标按钮设置，隐藏键盘按钮设置
         self.update_ui()
 
-    def init_compact_page(self):
-        """精简页面初始化"""
-        # 获取组件的行数和列数
-        rows = 11  # 根据界面控件来设置行数
-        columns = 4  # 界面有7列
-
-        # 自动设置所有列和行的大小
-        for col in range(columns):
-            self.compact_frame.grid_columnconfigure(col, weight=1, minsize=20)  # 所有列宽度随窗口变化，最小宽度 20px
-
-        for row in range(rows):
-            self.compact_frame.grid_rowconfigure(row, weight=1, minsize=27)  # 所有行高度随窗口变化，最小高度 27px
-
-        tk.Label(self.compact_frame, text="选择操作:").grid(row=0, column=1, columnspan=2, padx=1, pady=1)
-        tk.Radiobutton(self.compact_frame, text="鼠标点击", variable=self.action_var, value='mouse', command=self.update_ui).grid(
-            row=1, column=0, columnspan=2, padx=1, pady=1)
-        tk.Radiobutton(self.compact_frame, text="键盘按键", variable=self.action_var, value='key', command=self.update_ui).grid(
-            row=1, column=2, columnspan=2, padx=1, pady=1)
-
-        self.Radiobutton_Label = tk.Label(self.compact_frame, text="选择鼠标按钮:")
-        self.Radiobutton_l = tk.Radiobutton(self.compact_frame, text="左键", variable=self.mouse_button, value='left')
-        self.Radiobutton_r = tk.Radiobutton(self.compact_frame, text="右键", variable=self.mouse_button, value='right')
-
-        self.key_combobox_Label = tk.Label(self.compact_frame, text="选择键盘按键:")
-        # 使用Combobox来选择或输入按键
-        self.key_combobox = ttk.Combobox(self.compact_frame, textvariable=self.selected_key, values=self.key_options, width=8)
-
-        tk.Label(self.compact_frame, text="选择功能:").grid(row=4, column=1, columnspan=2, padx=1, pady=1)
-        tk.Radiobutton(self.compact_frame, text="连点", variable=self.function_var, value='spam').grid(row=5, column=0, columnspan=2, padx=1, pady=1)
-        tk.Radiobutton(self.compact_frame, text="长按", variable=self.function_var, value='hold').grid(row=5, column=2, columnspan=2, padx=1, pady=1)
-
-        tk.Label(self.compact_frame, text="连点间隔(ms):").grid(row=6, column=0, columnspan=2, padx=1, pady=1)
-        self.click_interval_entry = tk.Entry(self.compact_frame, textvariable=self.click_interval, width=11)
-        self.click_interval_entry.grid(row=7, column=0, columnspan=2, padx=1, pady=1)
-
-        tk.Label(self.compact_frame, text="间隔波动(ms):").grid(row=6, column=2, columnspan=2, padx=1, pady=1)
-        self.click_interval_swings_entry = tk.Entry(self.compact_frame, textvariable=self.click_interval_swings, width=11)
-        self.click_interval_swings_entry.grid(row=7, column=2, columnspan=2, padx=1, pady=1)
-
-        tk.Label(self.compact_frame, text="控制按键:").grid(row=8, column=1, columnspan=2, padx=1, pady=1)
-
-        # 创建一个包含 F1 到 F12 的下拉菜单
-        self.control_key_combobox = ttk.Combobox(self.compact_frame, textvariable=self.control_key, values=self.control_key_options, state="readonly", width=8)
-        self.control_key_combobox.grid(row=9, column=1, columnspan=2, padx=1, pady=1)
-
-        self.start_button = tk.Button(self.compact_frame, text="开始模拟", command=self.toggle_simulation, width=10)
-        self.start_button.grid(row=10, column=0, columnspan=2, padx=1, pady=1)
-
-        # 页面切换
-        tk.Button(self.compact_frame, text="原始页面", font=("Times New Roman", 8), command=self.toggle_page, width=7).grid(row=10, column=2, columnspan=2, padx=1, pady=1)
-
-        # 启动控制按键的检测
-        self.check_control_key()
-
-        # 默认显示鼠标按钮设置，隐藏键盘按钮设置
-        self.update_ui()
-
     def toggle_page(self):
         """切换页面"""
         # 获取当前窗口位置
@@ -208,14 +171,18 @@ class SimulatorApp:
 
         if self.is_compact:
             # 切换到原始页面
-            self.compact_frame.pack_forget()
-            self.original_frame.pack(fill=tk.BOTH, expand=True)
             self.master.geometry(f"{self.default_geometry['original']}+{x}+{y}")
+            self.reset_grid_configuration()
+            self.init_rows_and_cols(11,7)
+            self.status_label.grid(row=0, column=4, columnspan=3, padx=9, pady=1, sticky='w')
+            self.status_text.grid(row=1, column=4, columnspan=3, rowspan=10, padx=9, pady=1, sticky='nsew')
         else:
             # 切换到精简页面
-            self.original_frame.pack_forget()
-            self.compact_frame.pack(fill=tk.BOTH, expand=True)
+            self.status_label.grid_forget()
+            self.status_text.grid_forget()
             self.master.geometry(f"{self.default_geometry['compact']}+{x}+{y}")
+            self.reset_grid_configuration()
+            self.init_rows_and_cols(11,4)
 
         self.is_compact = not self.is_compact
 
