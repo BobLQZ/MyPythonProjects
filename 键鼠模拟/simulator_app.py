@@ -12,7 +12,7 @@ class SimulatorApp:
         """页面初始化"""
         self.master = master
         self.master.title("SimulatorApp")
-        # self.master.iconbitmap('logo.ico')
+        self.master.iconbitmap('D:/Python/Project/MyPythonProjects/键鼠模拟/ico/logo.ico')
         self.master.geometry("620x440+650+320")  # 设置窗口大小和位置
         self.is_running = False
         self.is_compact = False  # 是否处于精简页面的标志
@@ -124,20 +124,6 @@ class SimulatorApp:
         self.click_interval_swings_entry = tk.Entry(self.original_frame, textvariable=self.click_interval_swings, width=11)
         self.click_interval_swings_entry.grid(row=7, column=2, columnspan=2, padx=1, pady=1)
 
-        # # Canvas用来绘制气泡提示
-        # self.canvas = tk.Canvas(master, width=200, height=40, bg="white", bd=0, highlightthickness=0)
-        # self.canvas.grid(row=8, column=0, columnspan=2, padx=1, pady=1, sticky="nsew")
-        # self.canvas.create_text(100, 20, text="", anchor="center", font=("Arial", 10), fill="red")
-
-        # # 创建一个 canvas 用于显示提示信息
-        # self.tooltip = tk.Label(master, text="", bg="yellow", fg="black", font=("Arial", 10), bd=1, relief="solid")
-        # self.tooltip.grid(row=8, column=0, columnspan=2, padx=1, pady=1)
-        # self.tooltip.grid_forget()  # 初始隐藏提示框
-        #
-        # # 绑定鼠标事件显示气泡提示
-        # self.click_interval_entry.bind("<Enter>", self.show_tooltip)
-        # self.click_interval_entry.bind("<Leave>", self.hide_tooltip)
-
         tk.Label(self.original_frame, text="控制按键:").grid(row=8, column=1, columnspan=2, padx=1, pady=1)
         # 创建一个包含 F1 到 F12 的下拉菜单
         self.control_key_combobox = ttk.Combobox(self.original_frame, textvariable=self.control_key, values=self.control_key_options, state="readonly", width=8)
@@ -155,7 +141,7 @@ class SimulatorApp:
 
         self.status_text = tk.Text(self.original_frame, height=6, width=30, wrap=tk.WORD, state=tk.DISABLED)
         self.status_text.grid(row=1, column=4, columnspan=3, rowspan=10, padx=9, pady=1, sticky='nsew')
-        self.update_status(f"<{time.strftime('%H:%M:%S')}>软件已就绪", color="")  # 初始状态
+        self.update_status(f"[{time.strftime('%H:%M:%S')}] 软件已就绪", color="")  # 初始状态
 
         # 启动控制按键的检测
         self.check_control_key()
@@ -279,24 +265,6 @@ class SimulatorApp:
         except:
             return mou
 
-    # def show_tooltip(self, event):
-    #     self.canvas.itemconfig(1, text="间隔：最小为100ms")  # 显示气泡提示
-    #     self.canvas.lift(1)  # 将提示文字提升到最前面
-    #
-    # def hide_tooltip(self, event):
-    #     # 隐藏提示
-    #     self.canvas.itemconfig(1, text="")
-    #     self.canvas.lower(1)  # 将提示文字移到最底层
-
-    # def show_tooltip(self, event):
-    #     """显示气泡提示"""
-    #     self.tooltip.config(text="间隔：最小为100ms")  # 显示气泡提示
-    #     self.tooltip.grid(row=8, column=0, columnspan=2, padx=1, pady=1)  # 重新显示提示框
-    #
-    # def hide_tooltip(self, event):
-    #     """隐藏气泡提示"""
-    #     self.tooltip.grid_forget()  # 隐藏提示框
-
     def check_control_key(self):
         """模拟启动检测"""
         control_key = self.control_key.get()
@@ -316,11 +284,11 @@ class SimulatorApp:
             self.start_button.config(text="停止模拟")
             if self.action_var.get() == 'mouse':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}",
+                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {self.zh_cn_To_en_us_mou(self.function_var.get())} - {self.zh_cn_To_en_us_mou(self.mouse_button.get())}",
                     color="#41ae3c")
             elif self.action_var.get() == 'key':
                 self.update_status(
-                    f"<{time.strftime('%H:%M:%S')}>模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.selected_key.get()}",
+                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {self.zh_cn_To_en_us_key(self.function_var.get())} - {self.selected_key.get()}",
                     color="#41ae3c")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
@@ -385,10 +353,10 @@ class SimulatorApp:
         elapsed_time = end_time - start_time
         if self.function_var.get() == 'hold':
             self.update_status(
-                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒", color="")
+                f"[{time.strftime('%H:%M:%S')}] 模拟结束, 时长: {elapsed_time:.3f}秒", color="")
         elif self.function_var.get() == 'spam':
             self.update_status(
-                f"<{time.strftime('%H:%M:%S')}>模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}, 平均间隔: {elapsed_time / click_count:.3f}", color="")
+                f"[{time.strftime('%H:%M:%S')}] 模拟结束, 时长: {elapsed_time:.3f}秒, 点击次数: {click_count}, 平均间隔: {elapsed_time / click_count:.3f}", color="")
         self.start_button.config(text="开始模拟")
 
 
