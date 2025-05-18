@@ -17,7 +17,7 @@ def init_rows_and_cols(frame, rows, cols):
         frame.grid_rowconfigure(row, weight=1, minsize=30)  # 所有行高度随窗口变化，最小高度 30px
 
     for col in range(cols):
-        frame.grid_columnconfigure(col, weight=1, minsize=20)  # 所有列宽度随窗口变化，最小宽度 40px
+        frame.grid_columnconfigure(col, weight=1, minsize=43)  # 所有列宽度随窗口变化，最小宽度 40px
 
 
 def zh_trans_en_key(key):
@@ -75,7 +75,7 @@ class SimulatorApp:
 
         self.default_geometry = {
             "original": "620x440",  # 原始页面大小
-            "compact": "235x440",  # 精简页面大小
+            "compact": "239x440",  # 精简页面大小
         }
         # 默认值
         self.default_active = 'mouse'
@@ -142,30 +142,26 @@ class SimulatorApp:
         """控制操作设置区初始化"""
         init_rows_and_cols(self.control_frame, 11, 4)
 
-        ttk.Label(self.control_frame, text="选择操作:").grid(row=0, column=0, columnspan=2, padx=1, pady=1)
+        ttk.Label(self.control_frame, text="选择操作:", width=11).grid(row=0, column=0, columnspan=2, padx=1, pady=1)
         ttk.Radiobutton(self.control_frame, text="鼠标模拟", variable=self.action_var, value='mouse',
-                        command=self.update_ui).grid(
-            row=1, column=0, columnspan=2, padx=1, pady=1)
+                        command=self.update_ui, width=8).grid(row=1, column=0, columnspan=2, padx=1, pady=1)
         ttk.Radiobutton(self.control_frame, text="键盘模拟", variable=self.action_var, value='key',
-                        command=self.update_ui).grid(
-            row=1, column=2, columnspan=2, padx=1, pady=1)
+                        command=self.update_ui, width=8).grid(row=1, column=2, columnspan=2, padx=1, pady=1)
 
-        self.Radiobutton_Label = ttk.Label(self.control_frame, text="选择鼠标按键:")
-        self.Radiobutton_l = ttk.Radiobutton(self.control_frame, text="左键", variable=self.mouse_button, value='left')
-        self.Radiobutton_r = ttk.Radiobutton(self.control_frame, text="右键", variable=self.mouse_button, value='right')
+        self.Radiobutton_Label = ttk.Label(self.control_frame, text="选择鼠标按键:", width=11)
+        self.Radiobutton_l = ttk.Radiobutton(self.control_frame, text="左键", variable=self.mouse_button, value='left', width=8)
+        self.Radiobutton_r = ttk.Radiobutton(self.control_frame, text="右键", variable=self.mouse_button, value='right', width=8)
 
-        self.key_combobox_Label = ttk.Label(self.control_frame, text="选择键盘按键:")
+        self.key_combobox_Label = ttk.Label(self.control_frame, text="选择键盘按键:", width=11)
         # 使用Combobox来选择或输入按键
         self.key_combobox = ttk.Combobox(self.control_frame, textvariable=self.selected_key, values=self.key_options,
                                          width=8)
 
-        ttk.Label(self.control_frame, text="选择功能:").grid(row=4, column=0, columnspan=2, padx=1, pady=1)
-        ttk.Radiobutton(self.control_frame, text="连点", variable=self.function_var, value='spam').grid(row=5, column=0,
-                                                                                                        columnspan=2,
-                                                                                                        padx=1, pady=1)
-        ttk.Radiobutton(self.control_frame, text="长按", variable=self.function_var, value='hold').grid(row=5, column=2,
-                                                                                                        columnspan=2,
-                                                                                                        padx=1, pady=1)
+        ttk.Label(self.control_frame, text="选择功能:", width=11).grid(row=4, column=0, columnspan=2, padx=1, pady=1)
+        ttk.Radiobutton(self.control_frame, text="连点", variable=self.function_var, value='spam', width=8
+                        ).grid(row=5, column=0, columnspan=2, padx=1, pady=1)
+        ttk.Radiobutton(self.control_frame, text="长按", variable=self.function_var, value='hold', width=8
+                        ).grid(row=5, column=2, columnspan=2, padx=1, pady=1)
 
         ttk.Label(self.control_frame, text="连点间隔(ms):").grid(row=6, column=0, columnspan=2, padx=1, pady=1)
         self.click_interval_entry = ttk.Entry(self.control_frame, textvariable=self.click_interval, width=11)
@@ -176,7 +172,7 @@ class SimulatorApp:
                                                      width=11)
         self.click_interval_swings_entry.grid(row=7, column=2, columnspan=2, padx=1, pady=1)
 
-        ttk.Label(self.control_frame, text="控制按键:").grid(row=8, column=1, columnspan=2, padx=1, pady=1)
+        ttk.Label(self.control_frame, text="控制按键:", width=11).grid(row=8, column=1, columnspan=2, padx=1, pady=1)
         # 创建一个包含 F1 到 F12 的下拉菜单
         ttk.Combobox(self.control_frame, textvariable=self.control_key, values=self.control_key_options,
                      state="readonly", width=8).grid(row=9, column=1, columnspan=2, padx=1, pady=1)
@@ -212,7 +208,7 @@ class SimulatorApp:
 
     def init_logging_frame(self):
         """状态显示文本框初始化"""
-        self.logging_text = tk.Text(self.logging_frame, height=6, width=46, wrap="word", state="disabled")
+        self.logging_text = tk.Text(self.logging_frame, width=45, wrap="word", state="disabled")
         scrollbar = ttk.Scrollbar(self.logging_frame, orient="vertical", command=self.logging_text.yview)
         self.logging_text.configure(yscrollcommand=scrollbar.set)
 
@@ -280,7 +276,7 @@ class SimulatorApp:
         # 向文本框中添加信息并自动滚动
         self.logging_text.config(state="normal")  # 允许编辑
         self.logging_text.insert(tk.END, message + "\n")
-        line_index = str(int(self.logging_text.index(tk.END).split('.')[0]) - 2)  # 获取当前插入文本的行号, 起始行号为 3 暂时不知道为什么
+        line_index = str(int(self.logging_text.index(tk.END).split('.')[0]) - 2)  # 获取当前插入文本的行号, 起始行号为3暂时不知道为什么
         tag_name = f"text_{line_index}"  # 为新插入的文本创建一个唯一标签
         self.logging_text.tag_add(tag_name, f"{line_index}.0", f"{line_index}.end")  # 为新插入的文本设置标签
         self.logging_text.tag_config(tag_name, foreground=color)  # 新文本按需着色
