@@ -5,7 +5,7 @@ rem 指定要打包的 Python 脚本列表
 set SCRIPTS=simulator_app.py
 
 rem 设置额外字段（根据需求修改）
-set ADDITIONAL_FIELD=_v1.2.0
+set ADDITIONAL_FIELD=_v1.3.1
 
 rem 指定打包选项
 set OPTIONS=--onefile --windowed
