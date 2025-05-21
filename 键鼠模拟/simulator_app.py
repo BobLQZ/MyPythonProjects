@@ -20,34 +20,31 @@ def init_rows_and_cols(frame, rows, cols):
         frame.grid_columnconfigure(col, weight=1, minsize=43)  # 所有列宽度随窗口变化，最小宽度 40px
 
 
+def zh_trans_en(item, mapping):
+    """通用中英文转换"""
+    # 中->英
+    if item in mapping:
+        return mapping[item]
+    # 英->中
+    for k, v in mapping.items():
+        if v == item:
+            return k
+    return item
+
 def zh_trans_en_key(key):
-    """键盘文字中英文转换"""
     key_zh_cn = {'左方向键': 'left', '右方向键': 'right', '上方向键': 'up', '下方向键': 'down', '空格': 'space',
                  '长按': 'hold', '连点': 'spam'}
-    try:
-        return key_zh_cn[key]
-    except:
-        value = [k for k, v in key_zh_cn.items() if v == key]
-        try:
-            return value[0]
-        except:
-            return key
-
+    return zh_trans_en(key, key_zh_cn)
 
 def zh_trans_en_mou(mou):
-    """鼠标文字中英文转换"""
     mou_zh_cn = {'左键 ': 'left', '右键': 'right', '长按': 'hold', '连点': 'spam'}
-    value = [k for k, v in mou_zh_cn.items() if v == mou]
-    try:
-        return value[0]
-    except:
-        return mou
+    return zh_trans_en(mou, mou_zh_cn)
 
 
 def show_about():
     """显示关于信息"""
     messagebox.showinfo("关于",
-                        "键鼠模拟器 v1.0\n\n"
+                        "键鼠模拟器 v1.3\n\n"
                         "一个高精度的键盘和鼠标操作模拟工具\n\n"
                         "特性:\n"
                         "• 支持鼠标左右键点击和长按\n"
@@ -98,7 +95,7 @@ class SimulatorApp:
         # 键盘模拟键
         self.key_options = [chr(i) for i in range(97, 123)]  # 添加a-z字母按键
         self.key_options.extend([str(i) for i in range(0, 10)])  # 添加数字0-9按键
-        self.key_options.extend(['空格', 'enter', 'tab', 'esc'])  # 常用功能键
+        self.key_options.extend(['space', 'enter', 'tab', 'esc'])  # 常用功能键
 
         # 控制按键选项
         self.control_key_options = [f'F{i}' for i in range(1, 13)]  # 生成 F1 到 F12 的选项
@@ -314,11 +311,13 @@ class SimulatorApp:
             self.start_button.config(text="停止模拟")
             if self.action_var.get() == 'mouse':
                 self.update_status(
-                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {zh_trans_en_key(self.function_var.get())} - {self.mouse_button.get()}",
+                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {zh_trans_en_mou(self.function_var.get())} - "
+                    f"{zh_trans_en_mou(self.mouse_button.get())}",
                     color="#41ae3c")
             elif self.action_var.get() == 'key':
                 self.update_status(
-                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {zh_trans_en_key(self.function_var.get())} - {self.selected_key.get()}",
+                    f"[{time.strftime('%H:%M:%S')}] 模拟开始, 模拟: {zh_trans_en_key(self.function_var.get())} - "
+                    f"{zh_trans_en_key(self.selected_key.get())}",
                     color="#41ae3c")
             threading.Thread(target=self.run_simulation, daemon=True).start()
         else:
