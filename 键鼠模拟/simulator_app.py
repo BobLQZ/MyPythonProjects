@@ -31,10 +31,12 @@ def zh_trans_en(item, mapping):
             return k
     return item
 
+
 def zh_trans_en_key(key):
     key_zh_cn = {'左方向键': 'left', '右方向键': 'right', '上方向键': 'up', '下方向键': 'down', '空格': 'space',
                  '长按': 'hold', '连点': 'spam'}
     return zh_trans_en(key, key_zh_cn)
+
 
 def zh_trans_en_mou(mou):
     mou_zh_cn = {'左键 ': 'left', '右键': 'right', '长按': 'hold', '连点': 'spam'}
@@ -106,7 +108,9 @@ class SimulatorApp:
         self.Radiobutton_r = None
         self.key_combobox_Label = None
         self.key_combobox = None
+        self.click_interval_label = None
         self.click_interval_entry = None
+        self.click_interval_swings_label = None
         self.click_interval_swings_entry = None
         self.start_button = None
         self.about_button = None
@@ -126,7 +130,7 @@ class SimulatorApp:
         self.init_logging_frame()
 
         # 默认显示鼠标按钮设置，隐藏键盘按钮设置
-        self.update_ui()
+        self.update_mouse_key_ui()
 
         # 启动控制按键的检测
         self.check_control_key()
@@ -141,9 +145,9 @@ class SimulatorApp:
 
         ttk.Label(self.control_frame, text="选择操作:", width=11).grid(row=0, column=0, columnspan=2, padx=1, pady=1)
         ttk.Radiobutton(self.control_frame, text="鼠标模拟", variable=self.action_var, value='mouse',
-                        command=self.update_ui, width=8).grid(row=1, column=0, columnspan=2, padx=1, pady=1)
+                        command=self.update_mouse_key_ui, width=8).grid(row=1, column=0, columnspan=2, padx=1, pady=1)
         ttk.Radiobutton(self.control_frame, text="键盘模拟", variable=self.action_var, value='key',
-                        command=self.update_ui, width=8).grid(row=1, column=2, columnspan=2, padx=1, pady=1)
+                        command=self.update_mouse_key_ui, width=8).grid(row=1, column=2, columnspan=2, padx=1, pady=1)
 
         self.Radiobutton_Label = ttk.Label(self.control_frame, text="选择鼠标按键:", width=11)
         self.Radiobutton_l = ttk.Radiobutton(self.control_frame, text="左键", variable=self.mouse_button, value='left', width=8)
@@ -155,18 +159,19 @@ class SimulatorApp:
                                          width=8)
 
         ttk.Label(self.control_frame, text="选择功能:", width=11).grid(row=4, column=0, columnspan=2, padx=1, pady=1)
-        ttk.Radiobutton(self.control_frame, text="连点", variable=self.function_var, value='spam', width=8
-                        ).grid(row=5, column=0, columnspan=2, padx=1, pady=1)
-        ttk.Radiobutton(self.control_frame, text="长按", variable=self.function_var, value='hold', width=8
-                        ).grid(row=5, column=2, columnspan=2, padx=1, pady=1)
+        ttk.Radiobutton(self.control_frame, text="连点", variable=self.function_var, value='spam',
+                        command=self.update_time_set_ui, width=8).grid(row=5, column=0, columnspan=2, padx=1, pady=1)
+        ttk.Radiobutton(self.control_frame, text="长按", variable=self.function_var, value='hold',
+                        command=self.update_time_set_ui, width=8).grid(row=5, column=2, columnspan=2, padx=1, pady=1)
 
-        ttk.Label(self.control_frame, text="连点间隔(ms):").grid(row=6, column=0, columnspan=2, padx=1, pady=1)
+        self.click_interval_label = ttk.Label(self.control_frame, text="连点间隔(ms):")
+        self.click_interval_label.grid(row=6, column=0, columnspan=2, padx=1, pady=1)
         self.click_interval_entry = ttk.Entry(self.control_frame, textvariable=self.click_interval, width=11)
         self.click_interval_entry.grid(row=7, column=0, columnspan=2, padx=1, pady=1)
 
-        ttk.Label(self.control_frame, text="波动间隔(ms):").grid(row=6, column=2, columnspan=2, padx=1, pady=1)
-        self.click_interval_swings_entry = ttk.Entry(self.control_frame, textvariable=self.click_interval_swings,
-                                                     width=11)
+        self.click_interval_swings_label = ttk.Label(self.control_frame, text="波动间隔(ms):")
+        self.click_interval_swings_label.grid(row=6, column=2, columnspan=2, padx=1, pady=1)
+        self.click_interval_swings_entry = ttk.Entry(self.control_frame, textvariable=self.click_interval_swings, width=11)
         self.click_interval_swings_entry.grid(row=7, column=2, columnspan=2, padx=1, pady=1)
 
         ttk.Label(self.control_frame, text="控制按键:", width=11).grid(row=8, column=1, columnspan=2, padx=1, pady=1)
@@ -180,7 +185,7 @@ class SimulatorApp:
         self.about_button = ttk.Button(self.control_frame, text="关于", command=show_about, width=6)
         self.about_button.grid(row=10, column=2, columnspan=2, padx=1, pady=1)
 
-    def update_ui(self):
+    def update_mouse_key_ui(self):
         """鼠标键盘模拟选项切换"""
         # 获取选择的操作类型
         action = self.action_var.get()
@@ -202,6 +207,25 @@ class SimulatorApp:
             self.Radiobutton_Label.grid_forget()
             self.Radiobutton_l.grid_forget()
             self.Radiobutton_r.grid_forget()
+
+    def update_time_set_ui(self):
+        """时间选项切换"""
+        # 获取选择的操作类型
+        function_var = self.function_var.get()
+
+        # 如果是鼠标操作，显示鼠标设置，隐藏键盘设置
+        if function_var == 'hold':
+            # 隐藏键盘相关控件
+            self.click_interval_label.grid_forget()
+            self.click_interval_entry.grid_forget()
+            self.click_interval_swings_label.grid_forget()
+            self.click_interval_swings_entry.grid_forget()
+        elif function_var == 'spam':
+            # 显示键盘设置相关控件
+            self.click_interval_label.grid(row=6, column=0, columnspan=2, padx=1, pady=1)
+            self.click_interval_entry.grid(row=7, column=0, columnspan=2, padx=1, pady=1)
+            self.click_interval_swings_label.grid(row=6, column=2, columnspan=2, padx=1, pady=1)
+            self.click_interval_swings_entry.grid(row=7, column=2, columnspan=2, padx=1, pady=1)
 
     def init_logging_frame(self):
         """状态显示文本框初始化"""
